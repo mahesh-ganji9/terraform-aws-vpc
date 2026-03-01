@@ -1,11 +1,10 @@
 locals {
     region = var.region
     tags = {
-        Name = "${var.component}-${var.env}"
+        Name = "${var.component}-${var.env}-vpc"
         project = var.project
         env = var.env
-        terraform = true
  }
-    vpc_final_tags = merge(local.tags , var.user_tags )
+    vpc_final_tags = merge(local.tags , var.user_tags)
 }
 
