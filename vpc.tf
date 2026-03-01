@@ -10,7 +10,7 @@ resource "aws_subnet" "public_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.public_subnet_cidrs)
   cidr_block = var.private_subnet_cidrs[count.index]
-  availability_zone = data.aws_availability_zones.available[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
   # roboshop-public-snet-us-east-1a
   tags = {
     Name = "${var.project}-publicsnet-${data.aws_availability_zones.available.names[count.index]}"
