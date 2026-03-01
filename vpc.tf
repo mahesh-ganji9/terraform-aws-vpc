@@ -13,7 +13,7 @@ resource "aws_subnet" "public_snet" {
   availability_zone = data.aws_availability_zones.available[count.index]
   # roboshop-public-snet-us-east-1a
   tags = {
-    Name = "${var.project}-publicsnet-${data.aws_availability_zones.available[count.index]}"
+    Name = "${var.project}-publicsnet-${data.aws_availability_zones.available.names[count.index]}"
   }
 }
 
@@ -24,6 +24,6 @@ resource "aws_subnet" "private_snet" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
   # roboshop-private-snet-us-east-1a
   tags = {
-    Name = "${var.project}-privatesnet-${data.aws_availability_zones.available[count.index]}"
+    Name = "${var.project}-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
   }
 }
