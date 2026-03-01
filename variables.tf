@@ -19,6 +19,3 @@ variable "user_tags" {
     default = {}
 }
 
-variable "component" {
-    type =string
-}

@@ -1,9 +1,9 @@
 locals {
-    region = "us-east-1a"
+    region = var.region
     tags = {
         project = var.project
         env = var.env
-        component = var.component
+        terraform = true
         
     }
     vpc_final_tags = merge(local.tags , var.user_tags )
