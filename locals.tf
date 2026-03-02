@@ -1,6 +1,6 @@
 locals {
     region = var.region
-    tags = {
+    common_tags = {
         Name = "${var.project}-${var.env}-vpc"
         project = var.project
         env = var.env
@@ -11,6 +11,7 @@ locals {
     # private_snet_tags = {
     #     Name = "${var.project}-privatesnet-${data.aws_availability_zones.available[count.index]}"
     # }
-    vpc_final_tags = merge(local.tags , var.user_tags)
+    
+    az_list = slice(data.aws_availability_zones.available.names,0,2)
 }
 

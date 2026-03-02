@@ -2,7 +2,13 @@ resource "aws_vpc" "main" {
   cidr_block       = var.cidr_block
   instance_tenancy = "default"
   region = var.region
-  tags = local.vpc_final_tags
+  tags = merge(local.common_tags,
+              {
+                Name = "${var.project}-${var.env}-vpc"
+              },
+              var.user_tags
+
+  )
 }
 
 
@@ -12,40 +18,51 @@ resource "aws_subnet" "public_snet" {
   cidr_block = var.public_subnet_cidrs[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   # roboshop-public-snet-us-east-1a
-  tags = {
-    Name = "${var.project}-publicsnet-${data.aws_availability_zones.available.names[count.index]}"
-  }
+  tags =merge(local.common_tags,
+        {
+           Name = "${var.project}-publicsnet-${data.aws_availability_zones.available.names[count.index]}"
+        },
+        var.user_tags
+  )
 }
 
 resource "aws_subnet" "private_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.private_subnet_cidrs)
   cidr_block = var.private_subnet_cidrs[count.index]
-  availability_zone = data.aws_availability_zones.available.names[count.index]
+  availability_zone = az_list[count.index]
   # roboshop-private-snet-us-east-1a
-  tags = {
-    Name = "${var.project}-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
-  }
+  tags = merge(local.common_tags,
+        {
+           Name = "${var.project}-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
+        },
+        var.user_tags
+  )
 }
 
 resource "aws_subnet" "db_private_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.db_private_subnet_cidrs)
   cidr_block = var.db_private_subnet_cidrs[count.index]
-  availability_zone = data.aws_availability_zones.available.names[count.index]
+  availability_zone = az_list[count.index]
   # roboshop-private-snet-us-east-1a
-  tags = {
-    Name = "${var.project}-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
-  }
+    tags = merge(local.common_tags,
+        {
+           Name = "${var.project}-db-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
+        },
+        var.user_tags
+  )
 }
 
-resource "aws_internet_gateway" "gw" {
+resource "aws_internet_gateway" "internetgw" {
   vpc_id = aws_vpc.main.id
+tags = merge(local.common_tags,
+        {
+           Name = "${var.project}-${var.env}-InternetGW"
+        }.
+        var.user_tags)
+   }
 
-  tags = {
-    Name = "${var.project}-${var.env}-InternetGW"
-  }
-}
 
 resource "aws_route_table" "Private_rt_table" {
   vpc_id = aws_vpc.main.id
@@ -53,9 +70,11 @@ resource "aws_route_table" "Private_rt_table" {
      cidr_block = "0.0.0.0/0"
      nat_gateway_id = aws_nat_gateway.main.id
   }
-  tags = {
+  tags = merge(local.common_tags,
+   {
     Name = "${var.project}-${var.env}-private-rttable"
-  }
+  },
+  var.user_tags)
 }
 
 resource "aws_route_table" "Public_rt_table" {
@@ -64,9 +83,11 @@ resource "aws_route_table" "Public_rt_table" {
      cidr_block = "0.0.0.0/0"
      gateway_id = aws_internet_gateway.gw.id
   }
-  tags = {
+  tags = merge(local.common_tags,
+   {
     Name = "${var.project}-${var.env}-public-rttable"
-  }
+  },
+  var.user_tags)
 }
 
 resource "aws_route_table" "db_private_rt_table" {
@@ -75,9 +96,11 @@ resource "aws_route_table" "db_private_rt_table" {
     cidr_block = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.main.id
   }
-  tags = {
-    Name = "${var.project}-${var.env}-Private-rttable"
-  }
+ tags = merge(local.common_tags,
+   {
+    Name = "${var.project}-${var.env}-db-private-rttable"
+  },
+  var.user_tags)
 }
 
 resource "aws_route_table_association" "private_rt_assoc" {
@@ -99,13 +122,18 @@ resource "aws_route_table_association" "private_db_rt_assoc" {
 }
 
 resource "aws_eip" "main" {
-  
-  depends_on = [ aws_internet_gateway.gw ]
+  address = vpc
+  depends_on = [ aws_internet_gateway.internetgw ]
 }
 
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.main.allocation_id
   subnet_id = aws_subnet.public_snet[0].id
   depends_on = [ aws_eip.main ]
+  tags = merge(local.common_tags,
+   {
+    Name = "${var.project}-${var.env}-natgw"
+  },
+  var.user_tags)
 }
 
