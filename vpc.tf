@@ -9,7 +9,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.public_subnet_cidrs)
-  cidr_block = var.private_subnet_cidrs[count.index]
+  cidr_block = var.public_subnet_cidrs[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   # roboshop-public-snet-us-east-1a
   tags = {
@@ -20,10 +20,95 @@ resource "aws_subnet" "public_snet" {
 resource "aws_subnet" "private_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.private_subnet_cidrs)
-  cidr_block = var.public_subnet_cidrs[count.index]
+  cidr_block = var.private_subnet_cidrs[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   # roboshop-private-snet-us-east-1a
   tags = {
     Name = "${var.project}-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
   }
 }
+
+resource "aws_subnet" "db_private_snet" {
+  vpc_id     = aws_vpc.main.id
+  count = length(var.db_private_subnet_cidrs)
+  cidr_block = var.db_private_subnet_cidrs[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  # roboshop-private-snet-us-east-1a
+  tags = {
+    Name = "${var.project}-privatesnet-${data.aws_availability_zones.available.names[count.index]}"
+  }
+}
+
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project}-${var.env}-InternetGW"
+  }
+}
+
+resource "aws_route_table" "Private_rt_table" {
+  vpc_id = aws_vpc.main.id
+   route {
+     cidr_block = "0.0.0.0/0"
+     nat_gateway_id = aws_nat_gateway.main.id
+  }
+  tags = {
+    Name = "${var.project}-${var.env}-private-rttable"
+  }
+}
+
+resource "aws_route_table" "Public_rt_table" {
+  vpc_id = aws_vpc.main.id
+  route {
+     cidr_block = "0.0.0.0/0"
+     gateway_id = aws_internet_gateway.gw.id
+  }
+  tags = {
+    Name = "${var.project}-${var.env}-public-rttable"
+  }
+}
+
+resource "aws_route_table" "db_private_rt_table" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+  tags = {
+    Name = "${var.project}-${var.env}-Private-rttable"
+  }
+}
+
+resource "aws_route_table_association" "private_rt_assoc" {
+  count = length(aws_subnet.private_snet)
+  subnet_id      = aws_subnet.private_snet[count.index].id
+  route_table_id = aws_route_table.private_rt_table.id
+}
+
+resource "aws_route_table_association" "public_rt_assoc" {
+  count = length(aws_subnet.public_snet.id)
+  subnet_id      = aws_subnet.public_snet[count.index].id
+  route_table_id = aws_route_table.Public_rt_table.id
+}
+
+resource "aws_route_table_association" "private_db_rt_assoc" {
+  count = length(aws_subnet.db_private_snet)
+  subnet_id      = aws_subnet.db_private_snet[count.index].id
+  route_table_id = aws_route_table.db_private_rt_table.id 
+}
+
+resource "aws_eip" "main" {
+  domain = vpc
+  depends_on = [ aws_internet_gateway.gw ]
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.main.allocation_id
+  availability_zone_address {
+     availability_zone = "us-east-1a"
+  }
+  subnet_id = aws_subnet.public_snet[0].id
+  depends_on = [ aws_eip.main ]
+}
+
