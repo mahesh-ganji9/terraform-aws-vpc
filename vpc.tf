@@ -83,11 +83,11 @@ resource "aws_route_table" "db_private_rt_table" {
 resource "aws_route_table_association" "private_rt_assoc" {
   count = length(aws_subnet.private_snet)
   subnet_id      = aws_subnet.private_snet[count.index].id
-  route_table_id = aws_route_table.private_rt_table.id
+  route_table_id = aws_route_table.Private_rt_table.id
 }
 
 resource "aws_route_table_association" "public_rt_assoc" {
-  count = length(aws_subnet.public_snet.id)
+  count = length(aws_subnet.public_snet)
   subnet_id      = aws_subnet.public_snet[count.index].id
   route_table_id = aws_route_table.Public_rt_table.id
 }
@@ -99,7 +99,7 @@ resource "aws_route_table_association" "private_db_rt_assoc" {
 }
 
 resource "aws_eip" "main" {
-  domain = vpc
+  
   depends_on = [ aws_internet_gateway.gw ]
 }
 
