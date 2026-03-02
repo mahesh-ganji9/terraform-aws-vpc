@@ -105,9 +105,6 @@ resource "aws_eip" "main" {
 
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.main.allocation_id
-  availability_zone_address {
-     availability_zone = "us-east-1a"
-  }
   subnet_id = aws_subnet.public_snet[0].id
   depends_on = [ aws_eip.main ]
 }
