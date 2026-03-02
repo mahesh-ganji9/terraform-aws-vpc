@@ -16,7 +16,7 @@ resource "aws_subnet" "public_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.public_subnet_cidrs)
   cidr_block = var.public_subnet_cidrs[count.index]
-  availability_zone = data.aws_availability_zones.available.names[count.index]
+  availability_zone = local.local.az_list[count.index]
   # roboshop-public-snet-us-east-1a
   tags =merge(local.common_tags,
         {
@@ -30,7 +30,7 @@ resource "aws_subnet" "private_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.private_subnet_cidrs)
   cidr_block = var.private_subnet_cidrs[count.index]
-  availability_zone = az_list[count.index]
+  availability_zone = local.az_list[count.index]
   # roboshop-private-snet-us-east-1a
   tags = merge(local.common_tags,
         {
@@ -44,7 +44,7 @@ resource "aws_subnet" "db_private_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.db_private_subnet_cidrs)
   cidr_block = var.db_private_subnet_cidrs[count.index]
-  availability_zone = az_list[count.index]
+  availability_zone = local.az_list[count.index]
   # roboshop-private-snet-us-east-1a
     tags = merge(local.common_tags,
         {
@@ -59,7 +59,7 @@ resource "aws_internet_gateway" "internetgw" {
 tags = merge(local.common_tags,
         {
            Name = "${var.project}-${var.env}-InternetGW"
-        }.
+        },
         var.user_tags)
    }
 
@@ -81,7 +81,7 @@ resource "aws_route_table" "Public_rt_table" {
   vpc_id = aws_vpc.main.id
   route {
      cidr_block = "0.0.0.0/0"
-     gateway_id = aws_internet_gateway.gw.id
+     gateway_id = aws_internet_gateway.internetgw.id
   }
   tags = merge(local.common_tags,
    {
