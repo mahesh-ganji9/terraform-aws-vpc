@@ -16,7 +16,7 @@ resource "aws_subnet" "public_snet" {
   vpc_id     = aws_vpc.main.id
   count = length(var.public_subnet_cidrs)
   cidr_block = var.public_subnet_cidrs[count.index]
-  availability_zone = local.local.az_list[count.index]
+  availability_zone = local.az_list[count.index]
   # roboshop-public-snet-us-east-1a
   tags =merge(local.common_tags,
         {
@@ -122,8 +122,13 @@ resource "aws_route_table_association" "private_db_rt_assoc" {
 }
 
 resource "aws_eip" "main" {
-  address = vpc
+  domain = "vpc"
   depends_on = [ aws_internet_gateway.internetgw ]
+   tags = merge(local.common_tags,
+   {
+    Name = "${var.project}-${var.env}-eip"
+  },
+  var.user_tags)
 }
 
 resource "aws_nat_gateway" "main" {
