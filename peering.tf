@@ -4,14 +4,14 @@ resource "aws_vpc_peering_connection" "peering" {
   auto_accept = true
 }
 
-resource "aws_route" "peering_route" {
+resource "aws_route" "private_route" {
   destination_cidr_block = aws_vpc.main.cidr_block
   route_table_id = aws_route_table.Private_rt_table.id
   vpc_peering_connection_id = aws_vpc_peering_connection.peering.id
 }
 
 
-resource "aws_route" "peering_route" {
+resource "aws_route" "default_route" {
   destination_cidr_block = data.aws_vpc.default_vpc.cidr_block
   route_table_id = data.aws_route_table.default_routetable.id
   vpc_peering_connection_id = aws_vpc_peering_connection.peering.id
