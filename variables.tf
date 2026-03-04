@@ -56,3 +56,8 @@ variable "db_private_subnet_tags" {
 # variable "availability_zones" {
 #    type = list(string)
 # }
+
+variable "is_peering_required" {
+   default = false
+   type = bool
+}
