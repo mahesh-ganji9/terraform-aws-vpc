@@ -19,9 +19,9 @@ variable "user_tags" {
     default = {}
 }
 
-variable "component" {
-  type = string
-}
+# variable "component" {
+#   type = string
+# }
 
 variable "public_subnet_cidrs" {
    type = list(string)
